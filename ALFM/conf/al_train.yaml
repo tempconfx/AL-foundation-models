@@ -1,0 +1,154 @@
+defaults:
+  - _self_
+  - init_strategy: random_init
+  - query_strategy: random
+  - model: dino_vit_g14
+  - dataset: cifar100
+  - classifier: linear_classifier
+  - hydra/hydra_logging: rich_logger
+  - hydra/job_logging: rich_logger
+
+
+
+# Active Learning experiment config
+iterations:
+  n: 20
+  exp: false  # whether to use exponentially increasing budgets
+
+budget: # query budget per class
+  init: 1  # intial query budget
+  step: 1  # query per iteration
+
+seed: 1
+force_exp: false  # overwrite previous results with identical params
+
+ssl:
+  enable: false
+  alpha: 0.9
+  knn: 500
+  gamma: 1
+  n_iter: 100
+
+# Classifier config
+classifier:
+  params:
+    dropout_p: 0.75
+    lr: 1e-2                 # cifar10: 1e-3, cifar100: 1e-2
+    weight_decay: 1e-2
+
+    metrics:
+      - _target_: torchmetrics.Accuracy
+        task: multiclass
+        num_classes: ${dataset.num_classes}
+        average: weighted
+
+      - _target_: torchmetrics.AUROC
+        task: multiclass
+        num_classes: ${dataset.num_classes}
+        average: weighted
+
+      - _target_: torchmetrics.F1Score
+        task: multiclass
+        num_classes: ${dataset.num_classes}
+        average: weighted
+
+
+# Model training config 
+dataloader:
+  batch_size: 4096
+  num_workers: 1
+  shuffle: false
+  pin_memory: true
+
+  # params for hydra.utils.instantiate
+  _target_: torch.utils.data.DataLoader
+  _partial_: true
+
+trainer:
+  precision: "16-mixed"
+  max_epochs: 400
+
+  # params for hydra.utils.instantiate
+  _target_: pytorch_lightning.Trainer
+  devices: 1
+  logger: false
+  default_root_dir: /tmp/${oc.env:USER}/lightning
+  enable_model_summary: false
+
+  callbacks:
+    - _target_: pytorch_lightning.callbacks.ModelCheckpoint
+      monitor: CELoss
+      save_on_train_epoch_end: true
+
+    - _target_: pytorch_lightning.callbacks.EarlyStopping
+      monitor: CELoss
+      patience: 20
+      min_delta: 1e-3
+      check_on_train_epoch_end: true
+
+    - _target_: pytorch_lightning.callbacks.RichProgressBar
+
+
+# Hydra config
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      seed: 1, 10, 100, 1000, 10000
+      query_strategy:
+        random,
+        uncertainty,
+        entropy,
+        margins,
+        coreset,
+        bald,
+        powerbald,
+        badge,
+        alfamix
+      model:
+        openclip_vit_B16,
+        openclip_vit_L14,
+        openclip_vit_H14,
+        openclip_vit_g14,
+        openclip_vit_G14,
+        dino_vit_S14,        
+        dino_vit_B14,
+        dino_vit_L14,
+        dino_vit_g14
+      dataset: 
+        aircraft,
+        cars,
+        cifar10,
+        cifar100,
+        flowers,
+        food101,
+        dtd,
+        pets,
+        places365,
+        svhn,
+        imagenet100,
+        amyloid_beta_bal,
+        amyloid_beta_unbal,
+        blood_smear,
+        cell_cycle,
+        colon_polyps,
+        colorectal_histology,
+        diabetic_retinopathy,
+        ham10000,
+        heart_failure,
+        iicbu_hela,
+        iicbu_lymphoma,
+        malaria,
+        pap_smear_2018,
+        pap_smear_2019,
+        patch_camelyon,
+        pollen
+
+  # temporarily disable logging
+  run:
+    dir: ""
+  sweep:
+    dir: /tmp/${oc.env:USER}/multirun
+  job:
+    chdir: false
+  output_subdir: null

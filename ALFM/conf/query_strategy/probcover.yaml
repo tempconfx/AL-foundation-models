@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - override /init_strategy: probcover_init
+
+query_strategy:
+  name: probcover
+  params:
+    batch_size: 10240
+    delta_iter: 6  # number of binary search ops to find delta
+    delta: null
