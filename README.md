@@ -1,5 +1,5 @@
 # AL-foundation-models
-This code base serves as a highly performant and efficient implementation of modern active learning strategies, along with the introduction of **DropQuery**. This repository is also amenable to the use of open-source foundation models.
+This code base serves as a highly performant and efficient implementation of modern active learning strategies, along with the introduction of **DropQuery**. This repo is amenable to the use of open-source foundation models.
 
 See the following publication for more **DropQuery** details:
 > **Revisiting active learning queries in the era of Foundation Models** <br> [...] et al.<br> under review.
@@ -10,7 +10,7 @@ conda env create -f env.yml
 conda activate alfm_env
 
 git clone git@github.com:tempconfx/AL-foundation-models.git
-cd Al-foundation-models
+cd AL-foundation-models
 conda develop .
 ```
 
@@ -26,11 +26,11 @@ There are many options to configure the sweep, so specify command line overrides
 Features will be saved to `FEATURE_CACHE_DIR` as specified in your `.env` file. For multi-GPU inference, make the following changes
 ```
 export SLURM_JOB_NAME=interactive  # otherwise pytorch lightning won't launch new processes
-python -m ALFM.feature_extraction +trainer.strategy=ddp, trainer.devices=4
+python -m ALFM.feature_extraction +trainer.strategy=ddp trainer.devices=4
 ```
 
 ## Active Learning
-The following active learning strategies are implemented in this repo:
+The following active learning strategies are implemented:
 
 | Strategy | Paper | Previous code | Notes |
 | --- | --- | --- | --- |
@@ -56,7 +56,7 @@ Guaranteed to be super fast ;)
 
 You can also run custom experiments by creating new config files in `ALFM/conf/dataset` for new datasets and `ALFM/conf/query_strategy` for custom Active Learning strategies. 
 
-You can then use `python -m ALFM.feature_extraction dataset=+your_custom_dataset.yaml` to extract foundation model features and `python -m ALFM.al_train query_strategy=+your_custom_query_strategy.yaml` to run your custom experiments.
+You can then use `python -m ALFM.feature_extraction dataset=your_custom_dataset.yaml` to extract foundation model features and `python -m ALFM.al_train query_strategy=your_custom_query_strategy.yaml` to run your custom experiments.
 
 ## Citation
 If you find this code useful, please cite our paper
